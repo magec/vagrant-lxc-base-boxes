@@ -3,7 +3,8 @@
 utils.lxc.attach() {
   cmd="$@"
   log "Running [${cmd}] inside '${CONTAINER}' container..."
-  (lxc-attach -n ${CONTAINER} -- $cmd) &>> ${LOG}
+  echo "lxc-attach -n ${CONTAINER} -- $cmd"
+  (sudo lxc-attach -n ${CONTAINER} -- $cmd) &>> ${LOG}
 }
 
 utils.lxc.start() {

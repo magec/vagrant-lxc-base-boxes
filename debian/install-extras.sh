@@ -14,7 +14,7 @@ SECS=15
 log "Sleeping for $SECS seconds..."
 sleep $SECS
 
-PACKAGES=(vim curl wget man-db openssh-server bash-completion ca-certificates sudo)
+PACKAGES=(vim curl wget man-db openssh-server bash-completion ca-certificates sudo ngrep strace rsync)
 
 log "Installing additional packages: ${ADDPACKAGES}"
 PACKAGES+=" ${ADDPACKAGES}"
@@ -25,7 +25,7 @@ fi
 if [ $RELEASE != 'raring' ] && [ $RELEASE != 'saucy' ] && [ $RELEASE != 'trusty' ] && [ $RELEASE != 'wily' ] ; then
   PACKAGES+=' nfs-common'
 fi
-if [ $RELEASE != 'stretch' ] ; then
+if [ $RELEASE != 'stretch' ] && [ $RELEASE != 'bionic' ]  && [ $RELEASE != 'focal' ]; then
   PACKAGES+=' python-software-properties'
 fi
 utils.lxc.attach apt-get update
@@ -37,11 +37,20 @@ CHEF=${CHEF:-0}
 PUPPET=${PUPPET:-0}
 SALT=${SALT:-0}
 BABUSHKA=${BABUSHKA:-0}
+STATIC_IP=${STATIC_IP:-0}
 
 if [ $DISTRIBUTION = 'debian' ]; then
   # Enable bash-completion
   sed -e '/^#if ! shopt -oq posix; then/,/^#fi/ s/^#\(.*\)/\1/g' \
     -i ${ROOTFS}/etc/bash.bashrc
+fi
+
+if [ $STATIC_IP = 1 ]; then
+    # Delete netplan (https://www.claudiokuenzler.com/blog/938/lxc-container-not-getting-ip-address-netplan)
+    utils.lxc.attach apt-get remove -y netplan.io
+
+    # Add google DNS
+    echo 'DNS=8.8.8.8' >> ${ROOTFS}/etc/systemd/resolved.conf
 fi
 
 if [ $ANSIBLE = 1 ]; then
@@ -73,19 +82,12 @@ else
 fi
 
 if [ $PUPPET = 1 ]; then
-  if $(lxc-attach -n ${CONTAINER} -- which puppet &>/dev/null); then
-    log "Puppet has been installed on container, skipping"
-  elif [ ${RELEASE} = 'sid' ]; then
-    warn "Puppet can't be installed on Debian sid, skipping"
-  else
+    set -x
     log "Installing Puppet"
-    wget http://apt.puppetlabs.com/puppetlabs-release-${RELEASE}.deb -O "${ROOTFS}/tmp/puppetlabs-release-stable.deb" &>>${LOG}
-    utils.lxc.attach dpkg -i "/tmp/puppetlabs-release-stable.deb"
-    utils.lxc.attach apt-get update
-    utils.lxc.attach apt-get install puppet -y --force-yes
-  fi
-else
-  log "Skipping Puppet installation"
+    wget https://apt.puppetlabs.com/puppet6-release-${RELEASE}.deb -O "${ROOTFS}/tmp/puppet6-release-${RELEASE}.deb" &>>${LOG}
+    utils.lxc.attach sudo dpkg -i /tmp/puppet6-release-${RELEASE}.deb
+    utils.lxc.attach sudo apt-get update
+    utils.lxc.attach sudo apt-get install -y --no-install-recommends puppet-agent puppet-bolt
 fi
 
 if [ $SALT = 1 ]; then

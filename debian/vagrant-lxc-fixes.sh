@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -x
 
 source common/ui.sh
 source common/utils.sh
@@ -45,7 +46,7 @@ if [ ${DISTRIBUTION} = 'debian' ]; then
 fi
 
 utils.lxc.attach /usr/sbin/locale-gen ${LANG}
-utils.lxc.attach update-locale LANG=${LANG}
+#utils.lxc.attach update-locale LANG=${LANG}
 
 # Fix to allow bindfs
 utils.lxc.attach ln -sf /bin/true /sbin/modprobe

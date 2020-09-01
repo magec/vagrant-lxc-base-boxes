@@ -1,8 +1,10 @@
-UBUNTU_BOXES= precise quantal raring saucy trusty utopic vivid wily xenial
+UBUNTU_BOXES= precise quantal raring saucy trusty utopic vivid wily xenial bionic focal
 DEBIAN_BOXES= squeeze wheezy jessie stretch sid
 CENTOS_BOXES= 6 7
 FEDORA_BOXES= rawhide 23 22 21 20 19
 TODAY=$(shell date -u +"%Y-%m-%d")
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin
+
 
 # Replace i686 with i386 and x86_64 with amd64
 ARCH=$(shell uname -m | sed -e "s/68/38/" | sed -e "s/x86_64/amd64/")
@@ -28,7 +30,7 @@ $(DEBIAN_BOXES): CONTAINER = "vagrant-base-${@}-$(ARCH)"
 $(DEBIAN_BOXES): PACKAGE = "output/${TODAY}/vagrant-lxc-${@}-$(ARCH).box"
 $(DEBIAN_BOXES):
 	@mkdir -p $$(dirname $(PACKAGE))
-	@sudo -E ./mk-debian.sh debian $(@) $(ARCH) $(CONTAINER) $(PACKAGE)
+	sudo -E ./mk-debian.sh debian $(@) $(ARCH) $(CONTAINER) $(PACKAGE)
 	@sudo chmod +rw $(PACKAGE)
 	@sudo chown ${USER}: $(PACKAGE)
 $(CENTOS_BOXES): CONTAINER = "vagrant-base-centos-${@}-$(ARCH)"

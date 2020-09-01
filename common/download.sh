@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -xe
 
 source common/ui.sh
 source common/utils.sh
